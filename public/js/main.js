@@ -1,20 +1,22 @@
 // alerts auto-hide and stacking
-document.addEventListener('DOMContentLoaded', function () {
-    const alerts = Array.from(document.querySelectorAll('#alerts .alert'));
-    alerts.forEach((alertEl, idx) => {
-        // stack visually (staggered vertical offset)
-        alertEl.style.transform = `translateY(${idx * 70}px)`;
 
-        // auto hide after 4s (+ small stagger)
-        const hideDelay = 4000 + idx * 300;
-        setTimeout(() => alertEl.classList.add('hide'), hideDelay);
+document.addEventListener('DOMContentLoaded', function() {
+    // 1. Tìm tất cả các phần tử có class 'alert'
+    const alerts = document.querySelectorAll('.alert');
 
-        // remove from DOM after transition ends
-        alertEl.addEventListener('transitionend', () => {
-            if (alertEl.parentNode) alertEl.parentNode.removeChild(alertEl);
-        });
+    // 2. Nếu có thông báo
+    if (alerts.length > 0) {
+        // Đợi 3000ms (3 giây)
+        setTimeout(function() {
+            alerts.forEach(function(alert) {
+                // Thêm class 'hide' để kích hoạt CSS transition (mờ dần)
+                alert.classList.add('hide');
 
-        // allow click to dismiss immediately
-        alertEl.addEventListener('click', () => alertEl.classList.add('hide'));
-    });
+                // Đợi thêm 500ms cho hiệu ứng mờ chạy xong rồi mới xóa hẳn khỏi DOM
+                setTimeout(function() {
+                    alert.remove();
+                }, 500); 
+            });
+        }, 3000); // <-- Bạn có thể chỉnh sửa 3000 thành 5000 nếu muốn 5 giây
+    }
 });

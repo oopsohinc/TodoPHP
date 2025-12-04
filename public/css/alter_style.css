@@ -203,6 +203,15 @@ a { text-decoration: none; color: inherit; }
     padding: 12px 20px; border-radius: 4px; color: white; margin-bottom: 10px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 10px;
     animation: slideIn 0.3s ease; font-size: 14px;
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.alert.hide {
+    animation: slideOut 0.3s ease;
+    opacity: 0;
+    transform: translateY(0);
+    transition: opacity 0.5s ease, transform 0.5s ease;
 }
 .alert-success { background-color: #107c10; }
 .alert-error { background-color: #d13438; }
@@ -210,6 +219,10 @@ a { text-decoration: none; color: inherit; }
 @keyframes slideIn {
     from { transform: translateX(100%); opacity: 0; }
     to { transform: translateX(0); opacity: 1; }
+}
+@keyframes slideOut {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
 }
 
 /* --- 8. MOBILE RESPONSIVE --- */

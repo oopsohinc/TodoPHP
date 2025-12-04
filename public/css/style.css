@@ -20,7 +20,7 @@ body {
 main {
     flex: 1;
     overflow: auto; /* main becomes the scrollable area so navbar/footer stay fixed */
-    -webkit-overflow-scrolling: touch;
+    /* -webkit-overflow-scrolling: touch; */
     padding-bottom: 1rem; /* spacing so content doesn't butt up against footer */
 }
 
