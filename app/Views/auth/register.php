@@ -4,13 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= $title ?? 'Register' ?></title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
     <div class="auth-container">
         <div class="auth-box">
-            <h1>📝 To-Do MVC</h1>
-            <h2>Create New Account</h2>
+            <h1 class="auth-title"><i class="fa-solid fa-check-double"></i> To-Do MVC</h1>
+            <h2 class="auth-subtitle">Create New Account</h2>
 
             <!-- Flash Messages -->
             <?php if ($error = \App\Core\Session::getFlash('error')): ?>
