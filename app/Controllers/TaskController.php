@@ -70,7 +70,7 @@ class TaskController extends Controller
         }
 
         // Get all tasks for this user from database
-        $tasks = $this->taskModel->getAllByUser($userId);
+        $tasks = $this->taskModel->getTasksByUserId($userId, $filter);
         // Get all lists for sidebar (if needed)
         $userLists = $this->listModel->getListsByUserId($userId);
 
