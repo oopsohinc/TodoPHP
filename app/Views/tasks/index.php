@@ -1,14 +1,30 @@
 <?php
+$title = $title ?? 'Tasks';
 ob_start();
 ?>
 
 <header class="content-header">
-    <div class="header-title">
-        <h1><?= $title ?? 'Tasks' ?></h1>
+    <div class="header-left">
+        <div class="header-title-row">
+            <h1><?= htmlspecialchars($title) ?></h1>
+
+            <?php if (!empty($currentList)): ?>
+                <div class="list-actions">
+                    <a href="/lists/edit?id=<?= $currentList['id'] ?>" class="btn-icon" title="Rename list">
+                        <i class="fa-solid fa-pen"></i>
+                    </a>
+                    <a href="/lists/delete?id=<?= $currentList['id'] ?>" class="btn-icon text-danger"
+                        title="Delete list"
+                        onclick="return confirm('Are you sure? All tasks in this list will be deleted.')">
+                        <i class="fa-solid fa-trash"></i>
+                    </a>
+                </div>
+            <?php endif; ?>
+        </div>
         <p class="current-date"><?= date('l, F j') ?></p>
     </div>
-    <div class="header-actions">
-        <button class="btn-icon"><i class="fa-solid fa-arrow-down-short-wide"></i> Sort</button>
+
+    <div class="header-right">
     </div>
 </header>
 
@@ -74,7 +90,12 @@ ob_start();
 
     <?php endif; ?>
 
-    <a href="/tasks/create" class="add-task-bar">
+    <?php
+    // Kiểm tra xem đang ở list nào (nếu là số thì là Custom List)
+    $currentListParam = (isset($active_filter) && is_numeric($active_filter)) ? '?list=' . $active_filter : '';
+    ?>
+
+    <a href="/tasks/create<?= $currentListParam ?>" class="add-task-bar">
         <div class="add-icon">
             <i class="fa-solid fa-plus"></i>
         </div>

@@ -46,6 +46,29 @@ class TaskController extends Controller
         // Get current user's ID from session
         $userId = Session::get('user_id');
 
+        $filter = $_GET['list'] ?? ($_GET['filter'] ?? 'inbox');
+
+        $title = 'My Tasks';
+        $currentList = null;
+
+        if ($filter === 'important') {
+            $title = 'Important Tasks';
+        } elseif ($filter === 'my-day') {
+            $title = 'My Day';
+        } elseif ($filter === 'planned') {
+            $title = 'Planned Tasks';
+        } elseif (is_numeric($filter)) {
+            // Custom list
+            $currentList = $this->listModel->findById($filter, $userId);
+            if ($currentList) {
+                $title = $currentList['name'];
+            } else {
+                Session::flash('error', 'List not found');
+                $this->redirect('/');
+                return;
+            }
+        }
+
         // Get all tasks for this user from database
         $tasks = $this->taskModel->getAllByUser($userId);
         // Get all lists for sidebar (if needed)
@@ -53,9 +76,11 @@ class TaskController extends Controller
 
         // Load view and pass tasks data
         $this->view('tasks/index', [
-            'title' => 'My Tasks',
+            'title' => $title,
             'tasks' => $tasks,
-            'userLists' => $userLists
+            'userLists' => $userLists,
+            'active_filter' => $filter,
+            'currentList' => $currentList
         ]);
     }
 
@@ -76,7 +101,8 @@ class TaskController extends Controller
         // Show create form (GET request)
         $this->view('tasks/create', [
             'title' => 'Create New Task',
-            'userLists' => $this->listModel->getListsByUserId(Session::get('user_id'))
+            'userLists' => $this->listModel->getListsByUserId(Session::get('user_id')),
+            'active_filter' => $_GET['list'] ?? null
         ]);
     }
 
@@ -91,6 +117,7 @@ class TaskController extends Controller
         // Get form data
         $title = trim($_POST['title'] ?? '');
         $description = trim($_POST['description'] ?? '');
+        $listId = !empty($_POST['list_id']) ? $_POST['list_id'] : null;
 
         // Validate input
         if (empty($title)) {
@@ -105,6 +132,7 @@ class TaskController extends Controller
         // Create task in database
         $result = $this->taskModel->create([
             'user_id' => $userId,
+            'list_id' => $listId,
             'title' => $title,
             'description' => $description,
             'image' => $imageName
@@ -169,6 +197,7 @@ class TaskController extends Controller
         // Get form data
         $title = trim($_POST['title'] ?? '');
         $description = trim($_POST['description'] ?? '');
+        $listId = !empty($_POST['list_id']) ? $_POST['list_id'] : null;
 
         // Validate
         if (empty($title)) {
@@ -189,6 +218,7 @@ class TaskController extends Controller
         $result = $this->taskModel->update($taskId, [
             'title' => $title,
             'description' => $description,
+            'list_id' => $listId,
             'image' => $imageName
         ], $userId);
 

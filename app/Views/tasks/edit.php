@@ -1,6 +1,6 @@
-<?php 
-$title = $title ?? 'Edit Task'; 
-ob_start(); 
+<?php
+$title = $title ?? 'Edit Task';
+ob_start();
 ?>
 
 <div class="form-wrapper">
@@ -13,7 +13,7 @@ ob_start();
 
     <div class="form-card">
         <form method="POST" action="/tasks/edit?id=<?= $task['id'] ?>" enctype="multipart/form-data">
-            
+
             <div class="form-group">
                 <label for="title">Task Title <span class="required">*</span></label>
                 <input type="text" id="title" name="title" class="form-control" value="<?= htmlspecialchars($task['title']) ?>" required>
@@ -54,6 +54,23 @@ ob_start();
                 </div>
             </div>
 
+            <div class="form-group">
+                <label for="list_id"><i class="fa-solid fa-layer-group"></i> List</label>
+                <select name="list_id" id="list_id" class="form-control">
+
+                    <option value="" <?= empty($task['list_id']) ? 'selected' : '' ?>>Tasks (Inbox)</option>
+
+                    <?php if (!empty($userLists)): ?>
+                        <?php foreach ($userLists as $list): ?>
+                            <option value="<?= $list['id'] ?>"
+                                <?= ($task['list_id'] == $list['id']) ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($list['name']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </select>
+            </div>
+
             <div class="form-actions-right">
                 <a href="/" class="btn btn-secondary">Cancel</a>
                 <button type="submit" class="btn btn-primary">
@@ -64,7 +81,7 @@ ob_start();
     </div>
 </div>
 
-<?php 
-$content = ob_get_clean(); 
-include __DIR__ . '/../layout.php'; 
+<?php
+$content = ob_get_clean();
+include __DIR__ . '/../layout.php';
 ?>

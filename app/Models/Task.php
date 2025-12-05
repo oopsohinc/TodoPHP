@@ -46,34 +46,31 @@ class Task extends Model
         $sql = "SELECT * FROM tasks WHERE user_id = :user_id";
         $params = [':user_id' => $userId];
 
-        // Xử lý các bộ lọc dựa trên Sidebar
-        if ($filter === 'important') {
-            // Lọc các task được đánh dấu sao
+        // 1. Lọc theo Custom List ID (VD: ?list=5)
+        if (is_numeric($filter) && (int)$filter > 0) {
+            $sql .= " AND list_id = :list_id";
+            $params[':list_id'] = $filter;
+        }
+        // 2. Lọc theo trạng thái đặc biệt
+        elseif ($filter === 'important') {
             $sql .= " AND is_important = 1";
-        } 
+        }
         elseif ($filter === 'my-day') {
-            // Lọc các task có hạn là hôm nay (CURDATE trong MySQL)
             $sql .= " AND due_date = CURDATE()";
         }
         elseif ($filter === 'planned') {
-            // Lọc các task có ngày hết hạn (tương lai hoặc quá khứ)
             $sql .= " AND due_date IS NOT NULL ORDER BY due_date ASC";
-            // Với Planned ta return luôn để tránh bị ghi đè ORDER BY ở dưới
             $stmt = $this->getDb()->prepare($sql);
             $stmt->execute($params);
             return $stmt->fetchAll();
         }
-        elseif (is_numeric($filter)) {
-            // Lọc theo Custom List ID
-            $sql .= " AND list_id = :list_id";
-            $params[':list_id'] = $filter;
-        } 
+        // 3. Mặc định (Inbox) - Xử lý cả NULL và 0
         else {
-            // Mặc định (Inbox): Chỉ lấy task không thuộc list nào
-            $sql .= " AND list_id IS NULL";
+            // Hiển thị task không thuộc list nào (Inbox)
+            // Sửa lỗi: Một số DB lưu 0 thay vì NULL, nên ta check cả 2
+            $sql .= " AND (list_id IS NULL OR list_id = 0)";
         }
 
-        // Mặc định sắp xếp cái mới nhất lên đầu
         $sql .= " ORDER BY created_at DESC";
 
         $stmt = $this->getDb()->prepare($sql);

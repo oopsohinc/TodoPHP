@@ -1,9 +1,9 @@
-<?php 
+<?php
 // 1. Khai báo tiêu đề (nếu chưa có trong $data)
-$title = $title ?? 'Create Task'; 
+$title = $title ?? 'Create Task';
 
 // 2. Bắt đầu bộ nhớ đệm
-ob_start(); 
+ob_start();
 ?>
 
 <div class="form-wrapper">
@@ -42,10 +42,27 @@ ob_start();
             </div>
 
             <div class="form-group">
-                 <div class="checkbox-wrapper">
+                <div class="checkbox-wrapper">
                     <input type="checkbox" id="is_important" name="is_important" value="1">
                     <label for="is_important">Mark as Important <i class="fa-solid fa-star text-warning"></i></label>
                 </div>
+            </div>
+
+            <div class="form-group">
+                <label for="list_id"><i class="fa-solid fa-layer-group"></i> Add to List</label>
+                <select name="list_id" id="list_id" class="form-control">
+
+                    <option value="" <?= empty($preSelectedListId) ? 'selected' : '' ?>>Tasks (Inbox)</option>
+
+                    <?php if (!empty($userLists)): ?>
+                        <?php foreach ($userLists as $list): ?>
+                            <option value="<?= $list['id'] ?>"
+                                <?= (isset($preSelectedListId) && $preSelectedListId == $list['id']) ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($list['name']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </select>
             </div>
 
             <div class="form-actions-right">
@@ -58,11 +75,11 @@ ob_start();
     </div>
 </div>
 
-<?php 
+<?php
 // 3. Lấy nội dung HTML ở trên gán vào biến $content
-$content = ob_get_clean(); 
+$content = ob_get_clean();
 
 // 4. Gọi Layout chính để hiển thị (Layout sẽ in biến $content ra)
 // Lưu ý đường dẫn: file này đang ở app/Views/tasks/ nên phải ra ngoài 1 cấp để thấy layout.php
-include __DIR__ . '/../layout.php'; 
+include __DIR__ . '/../layout.php';
 ?>

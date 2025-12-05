@@ -27,6 +27,7 @@ require_once __DIR__ . '/../vendor/autoload.php';
 use App\Core\Router;
 use App\Controllers\AuthController;
 use App\Controllers\TaskController;
+use App\Controllers\ListController;
 
 // Create a new Router instance
 $router = new Router();
@@ -48,13 +49,19 @@ $router->post('/register', AuthController::class, 'register');
 $router->get('/logout', AuthController::class, 'logout');
 // Task Routes
 $router->get('/', TaskController::class, 'index');  // Home page (task list)
+$router->get('/tasks', TaskController::class, 'index');
 $router->get('/tasks/create', TaskController::class, 'create');
 $router->post('/tasks/create', TaskController::class, 'create');
 $router->get('/tasks/edit', TaskController::class, 'edit');  // Uses ?id=X query param
 $router->post('/tasks/edit', TaskController::class, 'edit');
 $router->get('/tasks/delete', TaskController::class, 'delete');
 $router->get('/tasks/toggle', TaskController::class, 'toggle');  // Toggle completion status
-
+// List Routes
+$router->get('/lists/create',   ListController::class, 'create');
+$router->post('/lists/create',  ListController::class, 'create');
+$router->get('/lists/edit',     ListController::class, 'edit');
+$router->post('/lists/edit',    ListController::class, 'edit');
+$router->get('/lists/delete',   ListController::class, 'delete');
 // Dispatch the request
 // This will call the appropriate controller method based on the URL
 $router->dispatch();
