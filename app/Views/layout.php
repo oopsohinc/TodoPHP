@@ -24,7 +24,7 @@
                 </div>
 
                 <div class="user-info">
-                    <span class="avatar"><?= strtoupper(substr(\App\Core\Session::get('user_name'), 0, 1)) ?></span>
+                    <a href="/account" class="avatar" title="My Account"><?= strtoupper(substr(\App\Core\Session::get('user_name'), 0, 1)) ?></a>
                     <a href="/logout" class="btn-logout" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></a>
                 </div>
             </div>
