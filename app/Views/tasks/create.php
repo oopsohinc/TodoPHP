@@ -15,7 +15,7 @@ ob_start();
     </div>
 
     <div class="form-card">
-        <form method="POST" action="/tasks/create" enctype="multipart/form-data">
+        <form method="POST" action="/tasks/create">
             <div class="form-group">
                 <label for="title">Task Title <span class="required">*</span></label>
                 <input type="text" id="title" name="title" class="form-control" placeholder="What needs to be done?" required>
@@ -30,14 +30,6 @@ ob_start();
                 <div class="form-group half-width">
                     <label for="due_date">Due Date (Optional)</label>
                     <input type="date" id="due_date" name="due_date" class="form-control">
-                </div>
-
-                <div class="form-group half-width">
-                    <label for="image">Attachment</label>
-                    <div class="file-upload-wrapper">
-                        <input type="file" id="image" name="image" accept="image/*" class="form-control-file">
-                        <small class="text-muted">Max 5MB (JPG, PNG)</small>
-                    </div>
                 </div>
             </div>
 

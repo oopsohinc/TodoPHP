@@ -108,13 +108,13 @@ class Task extends Model
      * 
      * New tasks start with completed = false
      * 
-     * @param array $data Task data (user_id, title, description, image)
+     * @param array $data Task data (user_id, title, description)
      * @return int|false Last inserted ID on success, false on failure
      */
     public function create($data)
     {
-        $sql = "INSERT INTO tasks (user_id, list_id, title, description, image, is_important, due_date, completed, created_at) 
-                VALUES (:user_id, :list_id, :title, :description, :image, :is_important, :due_date, 0, NOW())";
+        $sql = "INSERT INTO tasks (user_id, list_id, title, description, is_important, due_date, completed, created_at) 
+                VALUES (:user_id, :list_id, :title, :description, :is_important, :due_date, 0, NOW())";
 
         $stmt = $this->getDb()->prepare($sql);
 
@@ -123,7 +123,6 @@ class Task extends Model
             ':list_id'      => $data['list_id'] ?? null,      // Nếu không có thì là NULL
             ':title'        => $data['title'],
             ':description'  => $data['description'] ?? '',
-            ':image'        => $data['image'] ?? null,
             ':is_important' => $data['is_important'] ?? 0,    // Mặc định false
             ':due_date'     => $data['due_date'] ?? null      // YYYY-MM-DD hoặc NULL
         ]);
@@ -134,7 +133,7 @@ class Task extends Model
     /**
      * Update an existing task
      * 
-     * Only updates title, description, and image
+     * Updates title, description, list, importance, and due date
      * Completion status is handled separately by toggleComplete()
      * 
      * @param int $id Task ID
@@ -147,7 +146,6 @@ class Task extends Model
         $sql = "UPDATE tasks 
                 SET title = :title, 
                     description = :description, 
-                    image = :image,
                     list_id = :list_id,
                     is_important = :is_important,
                     due_date = :due_date
@@ -158,7 +156,6 @@ class Task extends Model
         return $stmt->execute([
             ':title'        => $data['title'],
             ':description'  => $data['description'] ?? '',
-            ':image'        => $data['image'] ?? null,
             ':list_id'      => $data['list_id'] ?? null,
             ':is_important' => $data['is_important'] ?? 0,
             ':due_date'     => $data['due_date'] ?? null,
@@ -171,7 +168,6 @@ class Task extends Model
      * Delete a task
      * 
      * Permanently removes the task from the database
-     * Note: Uploaded images are NOT automatically deleted
      * 
      * @param int $id Task ID
      * @param int $userId User ID (for security check)

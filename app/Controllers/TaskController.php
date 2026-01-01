@@ -14,15 +14,6 @@ use App\Models\TodoList;
  * - Create new task
  * - Edit existing task
  * - Delete task
- * 
- * MVC Flow Example (Create Task):
- * 1. User visits /tasks/create
- * 2. Router dispatches to TaskController->create()
- * 3. Controller shows form View
- * 4. User fills form and uploads image
- * 5. Controller processes $_FILES, saves image
- * 6. Controller uses Task Model to save to database
- * 7. Controller redirects to task list
  */
 class TaskController extends Controller
 {
@@ -108,7 +99,6 @@ class TaskController extends Controller
 
     /**
      * Process create task form submission
-     * This includes handling file upload!
      */
     private function handleCreate()
     {
@@ -126,16 +116,12 @@ class TaskController extends Controller
             return;
         }
 
-        // Handle file upload
-        $imageName = $this->handleFileUpload();
-
         // Create task in database
         $result = $this->taskModel->create([
             'user_id' => $userId,
             'list_id' => $listId,
             'title' => $title,
-            'description' => $description,
-            'image' => $imageName
+            'description' => $description
         ]);
 
         if ($result) {
@@ -206,20 +192,11 @@ class TaskController extends Controller
             return;
         }
 
-        // Handle file upload (if new file uploaded)
-        $imageName = $this->handleFileUpload();
-        
-        // If no new image, keep the old one
-        if (!$imageName) {
-            $imageName = $currentTask['image'];
-        }
-
         // Update task in database
         $result = $this->taskModel->update($taskId, [
             'title' => $title,
             'description' => $description,
-            'list_id' => $listId,
-            'image' => $imageName
+            'list_id' => $listId
         ], $userId);
 
         if ($result) {
@@ -290,59 +267,5 @@ class TaskController extends Controller
         }
 
         $this->redirect('/');
-    }
-
-    /**
-     * Handle file upload
-     * 
-     * This is the key part for file upload!
-     * $_FILES is a PHP superglobal that contains uploaded file information
-     * 
-     * @return string|null Uploaded filename or null
-     */
-    private function handleFileUpload()
-    {
-        // Check if file was uploaded
-        if (!isset($_FILES['image']) || $_FILES['image']['error'] === UPLOAD_ERR_NO_FILE) {
-            return null;  // No file uploaded
-        }
-
-        // Check for upload errors
-        if ($_FILES['image']['error'] !== UPLOAD_ERR_OK) {
-            Session::flash('error', 'File upload error');
-            return null;
-        }
-
-        // Validate file type (only images)
-        $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-        $fileType = $_FILES['image']['type'];
-
-        if (!in_array($fileType, $allowedTypes)) {
-            Session::flash('error', 'Only image files are allowed');
-            return null;
-        }
-
-        // Validate file size (max 5MB)
-        $maxSize = 5 * 1024 * 1024;  // 5MB in bytes
-        if ($_FILES['image']['size'] > $maxSize) {
-            Session::flash('error', 'File size must be less than 5MB');
-            return null;
-        }
-
-        // Generate unique filename to avoid conflicts
-        $extension = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
-        $uniqueName = uniqid() . '_' . time() . '.' . $extension;
-
-        // Define upload directory
-        $uploadDir = __DIR__ . '/../../public/uploads/';
-        $uploadPath = $uploadDir . $uniqueName;
-
-        // Move uploaded file from temporary location to our uploads folder
-        if (move_uploaded_file($_FILES['image']['tmp_name'], $uploadPath)) {
-            return $uniqueName;  // Return filename to save in database
-        } else {
-            Session::flash('error', 'Failed to save uploaded file');
-            return null;
-        }
     }
 }

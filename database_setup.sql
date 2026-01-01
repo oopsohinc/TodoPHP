@@ -69,7 +69,6 @@ CREATE TABLE IF NOT EXISTS `tasks` (
   `list_id` INT NULL DEFAULT NULL,
   `title` VARCHAR(200) NOT NULL,
   `description` TEXT NULL DEFAULT NULL,
-  `image` VARCHAR(255) NULL DEFAULT NULL,
   `completed` TINYINT(1) NULL DEFAULT '0',
   `is_important` TINYINT(1) NULL DEFAULT '0',
   `due_date` DATE NULL DEFAULT NULL,
