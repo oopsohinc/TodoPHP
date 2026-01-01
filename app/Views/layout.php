@@ -7,6 +7,7 @@
     <title><?= $title ?? 'To-Do MVC' ?></title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../css/alter_style.css">
+    <link rel="stylesheet" href="../css/profile.css">
 </head>
 
 <body>
@@ -24,7 +25,9 @@
                 </div>
 
                 <div class="user-info">
-                    <span class="avatar"><?= strtoupper(substr(\App\Core\Session::get('user_name'), 0, 1)) ?></span>
+                    <a href="/profile" class="user-profile-link" title="View Profile">
+                        <span class="avatar"><?= strtoupper(substr(\App\Core\Session::get('user_name'), 0, 1)) ?></span>
+                    </a>
                     <a href="/logout" class="btn-logout" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></a>
                 </div>
             </div>

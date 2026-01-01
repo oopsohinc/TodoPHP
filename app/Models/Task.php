@@ -275,4 +275,37 @@ class Task extends Model
 
         return $counts;
     }
+
+    /**
+     * Get comprehensive task statistics for a user
+     * 
+     * @param int $userId User ID
+     * @return array Statistics including total, completed, incomplete, important counts
+     */
+    public function getStatistics($userId)
+    {
+        $sql = "SELECT 
+                    COUNT(*) as total,
+                    SUM(CASE WHEN completed = 1 THEN 1 ELSE 0 END) as completed,
+                    SUM(CASE WHEN completed = 0 THEN 1 ELSE 0 END) as incomplete,
+                    SUM(CASE WHEN is_important = 1 THEN 1 ELSE 0 END) as important,
+                    MIN(created_at) as first_task_date,
+                    MAX(created_at) as last_task_date
+                FROM tasks 
+                WHERE user_id = :user_id";
+
+        $stmt = $this->getDb()->prepare($sql);
+        $stmt->execute([':user_id' => $userId]);
+        $result = $stmt->fetch();
+
+        return [
+            'total' => (int)$result['total'],
+            'completed' => (int)($result['completed'] ?? 0),
+            'incomplete' => (int)($result['incomplete'] ?? 0),
+            'important' => (int)($result['important'] ?? 0),
+            'completion_rate' => $result['total'] > 0 ? round(((int)$result['completed'] / (int)$result['total']) * 100, 1) : 0,
+            'first_task_date' => $result['first_task_date'],
+            'last_task_date' => $result['last_task_date']
+        ];
+    }
 }
