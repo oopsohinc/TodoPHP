@@ -64,6 +64,8 @@ class TaskController extends Controller
         $tasks = $this->taskModel->getTasksByUserId($userId, $filter);
         // Get all lists for sidebar (if needed)
         $userLists = $this->listModel->getListsByUserId($userId);
+        // Get task counts for all filters and lists
+        $taskCounts = $this->taskModel->getTaskCounts($userId, $userLists);
 
         // Load view and pass tasks data
         $this->view('tasks/index', [
@@ -71,7 +73,8 @@ class TaskController extends Controller
             'tasks' => $tasks,
             'userLists' => $userLists,
             'active_filter' => $filter,
-            'currentList' => $currentList
+            'currentList' => $currentList,
+            'taskCounts' => $taskCounts
         ]);
     }
 
@@ -90,10 +93,15 @@ class TaskController extends Controller
         }
 
         // Show create form (GET request)
+        $userId = Session::get('user_id');
+        $userLists = $this->listModel->getListsByUserId($userId);
+        $taskCounts = $this->taskModel->getTaskCounts($userId, $userLists);
+        
         $this->view('tasks/create', [
             'title' => 'Create New Task',
-            'userLists' => $this->listModel->getListsByUserId(Session::get('user_id')),
-            'active_filter' => $_GET['list'] ?? null
+            'userLists' => $userLists,
+            'active_filter' => $_GET['list'] ?? null,
+            'taskCounts' => $taskCounts
         ]);
     }
 
@@ -166,10 +174,14 @@ class TaskController extends Controller
         }
 
         // Show edit form
+        $userLists = $this->listModel->getListsByUserId($userId);
+        $taskCounts = $this->taskModel->getTaskCounts($userId, $userLists);
+        
         $this->view('tasks/edit', [
             'title' => 'Edit Task',
             'task' => $task,
-            'userLists' => $this->listModel->getListsByUserId($userId)
+            'userLists' => $userLists,
+            'taskCounts' => $taskCounts
         ]);
     }
 

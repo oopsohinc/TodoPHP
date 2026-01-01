@@ -220,4 +220,59 @@ class Task extends Model
         $stmt = $this->getDb()->prepare($sql);
         return $stmt->execute([':id' => $id, ':user_id' => $userId]);
     }
+
+    /**
+     * Count tasks by filter for a specific user
+     * 
+     * @param int $userId User ID
+     * @param string $filter Filter type (inbox, important, my-day, planned, or list_id)
+     * @return int Number of tasks matching the filter
+     */
+    public function countByFilter($userId, $filter = 'inbox')
+    {
+        $sql = "SELECT COUNT(*) as total FROM tasks WHERE user_id = :user_id";
+        $params = [':user_id' => $userId];
+
+        if (is_numeric($filter) && (int)$filter > 0) {
+            $sql .= " AND list_id = :list_id";
+            $params[':list_id'] = $filter;
+        } elseif ($filter === 'important') {
+            $sql .= " AND is_important = 1";
+        } elseif ($filter === 'my-day') {
+            $sql .= " AND due_date = CURDATE()";
+        } elseif ($filter === 'planned') {
+            $sql .= " AND due_date IS NOT NULL";
+        } else {
+            $sql .= " AND (list_id IS NULL OR list_id = 0)";
+        }
+
+        $stmt = $this->getDb()->prepare($sql);
+        $stmt->execute($params);
+        $result = $stmt->fetch();
+        return (int)$result['total'];
+    }
+
+    /**
+     * Get count of tasks for all special filters and lists for a user
+     * 
+     * @param int $userId User ID
+     * @param array $userLists Array of user's custom lists
+     * @return array Associative array with counts for each filter/list
+     */
+    public function getTaskCounts($userId, $userLists = [])
+    {
+        $counts = [
+            'inbox' => $this->countByFilter($userId, 'inbox'),
+            'my-day' => $this->countByFilter($userId, 'my-day'),
+            'important' => $this->countByFilter($userId, 'important'),
+            'planned' => $this->countByFilter($userId, 'planned'),
+            'lists' => []
+        ];
+
+        foreach ($userLists as $list) {
+            $counts['lists'][$list['id']] = $this->countByFilter($userId, $list['id']);
+        }
+
+        return $counts;
+    }
 }
