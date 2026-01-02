@@ -7,6 +7,7 @@
     <title><?= $title ?? 'To-Do MVC' ?></title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../css/alter_style.css">
+    <link rel="stylesheet" href="../css/profile.css">
 </head>
 
 <body>
@@ -24,7 +25,9 @@
                 </div>
 
                 <div class="user-info">
-                    <a href="/account" class="avatar" title="My Account"><?= strtoupper(substr(\App\Core\Session::get('user_name'), 0, 1)) ?></a>
+                    <a href="/profile" class="user-profile-link" title="View Profile">
+                        <span class="avatar"><?= strtoupper(substr(\App\Core\Session::get('user_name'), 0, 1)) ?></span>
+                    </a>
                     <a href="/logout" class="btn-logout" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></a>
                 </div>
             </div>
@@ -40,16 +43,36 @@
             <aside class="sidebar">
                 <div class="sidebar-group">
                     <a href="/tasks?filter=my-day" class="sidebar-item <?= $currentFilter === 'my-day' ? 'active' : '' ?>">
-                        <i class="fa-solid fa-sun text-warning"></i> <span>My Day</span>
+                        <div class="sidebar-item-content">
+                            <div class="sidebar-item-label">
+                                <i class="fa-solid fa-sun text-warning"></i> <span>My Day</span>
+                            </div>
+                            <span class="task-count"><?= $taskCounts['my-day'] ?? 0 ?></span>
+                        </div>
                     </a>
                     <a href="/tasks?filter=important" class="sidebar-item <?= $currentFilter === 'important' ? 'active' : '' ?>">
-                        <i class="fa-regular fa-star text-danger"></i> <span>Important</span>
+                        <div class="sidebar-item-content">
+                            <div class="sidebar-item-label">
+                                <i class="fa-regular fa-star text-danger"></i> <span>Important</span>
+                            </div>
+                            <span class="task-count"><?= $taskCounts['important'] ?? 0 ?></span>
+                        </div>
                     </a>
                     <a href="/tasks?filter=planned" class="sidebar-item <?= $currentFilter === 'planned' ? 'active' : '' ?>">
-                        <i class="fa-solid fa-calendar-days text-info"></i> <span>Planned</span>
+                        <div class="sidebar-item-content">
+                            <div class="sidebar-item-label">
+                                <i class="fa-solid fa-calendar-days text-info"></i> <span>Planned</span>
+                            </div>
+                            <span class="task-count"><?= $taskCounts['planned'] ?? 0 ?></span>
+                        </div>
                     </a>
                     <a href="/tasks" class="sidebar-item <?= ($currentFilter === 'inbox' || $currentFilter === '') ? 'active' : '' ?>">
-                        <i class="fa-solid fa-inbox text-primary"></i> <span>Tasks</span>
+                        <div class="sidebar-item-content">
+                            <div class="sidebar-item-label">
+                                <i class="fa-solid fa-inbox text-primary"></i> <span>Tasks</span>
+                            </div>
+                            <span class="task-count"><?= $taskCounts['inbox'] ?? 0 ?></span>
+                        </div>
                     </a>
                 </div>
 
@@ -61,9 +84,15 @@
                             <?php
                             // So sánh lỏng (==) để '5' (string) vẫn bằng 5 (int)
                             $isActive = ($currentFilter == $list['id']) ? 'active' : '';
+                            $listCount = $taskCounts['lists'][$list['id']] ?? 0;
                             ?>
                             <a href="/tasks?list=<?= $list['id'] ?>" class="sidebar-item <?= $isActive ?>">
-                                <i class="fa-solid fa-list-ul"></i> <span><?= htmlspecialchars($list['name']) ?></span>
+                                <div class="sidebar-item-content">
+                                    <div class="sidebar-item-label">
+                                        <i class="fa-solid fa-list-ul"></i> <span><?= htmlspecialchars($list['name']) ?></span>
+                                    </div>
+                                    <span class="task-count"><?= $listCount ?></span>
+                                </div>
                             </a>
                         <?php endforeach; ?>
                     <?php endif; ?>

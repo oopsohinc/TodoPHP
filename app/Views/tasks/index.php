@@ -66,11 +66,6 @@ ob_start();
                                     <i class="fa-regular fa-calendar"></i> <?= date('M d', strtotime($task['due_date'])) ?>
                                 </span>
                             <?php endif; ?>
-
-                            <?php if (!empty($task['image'])): ?>
-                                <span class="meta-separator">•</span>
-                                <span class="meta-icon"><i class="fa-regular fa-image"></i> Image</span>
-                            <?php endif; ?>
                         </div>
                     </div>
                 </a>

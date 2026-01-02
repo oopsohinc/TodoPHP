@@ -4,14 +4,17 @@ namespace App\Controllers;
 use App\Core\Controller;
 use App\Core\Session;
 use App\Models\TodoList;
+use App\Models\Task;
 
 class ListController extends Controller
 {
     private $listModel;
+    private $taskModel;
 
     public function __construct()
     {
         $this->listModel = new TodoList();
+        $this->taskModel = new Task();
     }
 
     // 1. FORM TẠO LIST MỚI
@@ -39,10 +42,12 @@ class ListController extends Controller
         // Xử lý GET (Hiện form)
         // Vẫn cần lấy danh sách sidebar để hiển thị layout
         $userLists = $this->listModel->getListsByUserId($userId);
+        $taskCounts = $this->taskModel->getTaskCounts($userId, $userLists);
 
         $this->view('lists/create', [
             'title' => 'New List',
-            'userLists' => $userLists
+            'userLists' => $userLists,
+            'taskCounts' => $taskCounts
         ]);
     }
 
@@ -75,11 +80,13 @@ class ListController extends Controller
 
         // Xử lý GET (Hiện form)
         $userLists = $this->listModel->getListsByUserId($userId);
+        $taskCounts = $this->taskModel->getTaskCounts($userId, $userLists);
 
         $this->view('lists/edit', [
             'title' => 'Edit List',
             'list' => $list,
-            'userLists' => $userLists
+            'userLists' => $userLists,
+            'taskCounts' => $taskCounts
         ]);
     }
 

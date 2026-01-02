@@ -28,6 +28,7 @@ use App\Core\Router;
 use App\Controllers\AuthController;
 use App\Controllers\TaskController;
 use App\Controllers\ListController;
+use App\Controllers\UserController;
 
 // Create a new Router instance
 $router = new Router();
@@ -47,6 +48,10 @@ $router->post('/login', AuthController::class, 'login');
 $router->get('/register', AuthController::class, 'register');
 $router->post('/register', AuthController::class, 'register');
 $router->get('/logout', AuthController::class, 'logout');
+
+// User Routes
+$router->get('/profile', UserController::class, 'profile');
+
 // Task Routes
 $router->get('/', TaskController::class, 'index');  // Home page (task list)
 $router->get('/tasks', TaskController::class, 'index');

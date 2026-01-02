@@ -12,7 +12,7 @@ ob_start();
     </div>
 
     <div class="form-card">
-        <form method="POST" action="/tasks/edit?id=<?= $task['id'] ?>" enctype="multipart/form-data">
+        <form method="POST" action="/tasks/edit?id=<?= $task['id'] ?>">
 
             <div class="form-group">
                 <label for="title">Task Title <span class="required">*</span></label>
@@ -24,26 +24,10 @@ ob_start();
                 <textarea id="description" name="description" class="form-control" rows="4"><?= htmlspecialchars($task['description']) ?></textarea>
             </div>
 
-            <?php if (!empty($task['image'])): ?>
-                <div class="form-group">
-                    <label>Current Attachment</label>
-                    <div class="current-image-preview">
-                        <img src="/uploads/<?= htmlspecialchars($task['image']) ?>" alt="Task Image">
-                        <span class="text-muted"><i class="fa-regular fa-image"></i> <?= htmlspecialchars($task['image']) ?></span>
-                    </div>
-                </div>
-            <?php endif; ?>
-
             <div class="form-row">
                 <div class="form-group half-width">
                     <label for="due_date">Due Date</label>
                     <input type="date" id="due_date" name="due_date" class="form-control" value="<?= $task['due_date'] ?? '' ?>">
-                </div>
-
-                <div class="form-group half-width">
-                    <label for="image">Change Image</label>
-                    <input type="file" id="image" name="image" accept="image/*" class="form-control-file">
-                    <small class="text-muted">Leave empty to keep current image</small>
                 </div>
             </div>
 

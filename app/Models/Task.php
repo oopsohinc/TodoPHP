@@ -108,13 +108,13 @@ class Task extends Model
      * 
      * New tasks start with completed = false
      * 
-     * @param array $data Task data (user_id, title, description, image)
+     * @param array $data Task data (user_id, title, description)
      * @return int|false Last inserted ID on success, false on failure
      */
     public function create($data)
     {
-        $sql = "INSERT INTO tasks (user_id, list_id, title, description, image, is_important, due_date, completed, created_at) 
-                VALUES (:user_id, :list_id, :title, :description, :image, :is_important, :due_date, 0, NOW())";
+        $sql = "INSERT INTO tasks (user_id, list_id, title, description, is_important, due_date, completed, created_at) 
+                VALUES (:user_id, :list_id, :title, :description, :is_important, :due_date, 0, NOW())";
 
         $stmt = $this->getDb()->prepare($sql);
 
@@ -123,7 +123,6 @@ class Task extends Model
             ':list_id'      => $data['list_id'] ?? null,      // Nếu không có thì là NULL
             ':title'        => $data['title'],
             ':description'  => $data['description'] ?? '',
-            ':image'        => $data['image'] ?? null,
             ':is_important' => $data['is_important'] ?? 0,    // Mặc định false
             ':due_date'     => $data['due_date'] ?? null      // YYYY-MM-DD hoặc NULL
         ]);
@@ -134,7 +133,7 @@ class Task extends Model
     /**
      * Update an existing task
      * 
-     * Only updates title, description, and image
+     * Updates title, description, list, importance, and due date
      * Completion status is handled separately by toggleComplete()
      * 
      * @param int $id Task ID
@@ -147,7 +146,6 @@ class Task extends Model
         $sql = "UPDATE tasks 
                 SET title = :title, 
                     description = :description, 
-                    image = :image,
                     list_id = :list_id,
                     is_important = :is_important,
                     due_date = :due_date
@@ -158,7 +156,6 @@ class Task extends Model
         return $stmt->execute([
             ':title'        => $data['title'],
             ':description'  => $data['description'] ?? '',
-            ':image'        => $data['image'] ?? null,
             ':list_id'      => $data['list_id'] ?? null,
             ':is_important' => $data['is_important'] ?? 0,
             ':due_date'     => $data['due_date'] ?? null,
@@ -171,7 +168,6 @@ class Task extends Model
      * Delete a task
      * 
      * Permanently removes the task from the database
-     * Note: Uploaded images are NOT automatically deleted
      * 
      * @param int $id Task ID
      * @param int $userId User ID (for security check)
@@ -223,5 +219,93 @@ class Task extends Model
         $sql = "UPDATE tasks SET is_important = NOT is_important WHERE id = :id AND user_id = :user_id";
         $stmt = $this->getDb()->prepare($sql);
         return $stmt->execute([':id' => $id, ':user_id' => $userId]);
+    }
+
+    /**
+     * Count tasks by filter for a specific user
+     * 
+     * @param int $userId User ID
+     * @param string $filter Filter type (inbox, important, my-day, planned, or list_id)
+     * @return int Number of tasks matching the filter
+     */
+    public function countByFilter($userId, $filter = 'inbox')
+    {
+        $sql = "SELECT COUNT(*) as total FROM tasks WHERE user_id = :user_id";
+        $params = [':user_id' => $userId];
+
+        if (is_numeric($filter) && (int)$filter > 0) {
+            $sql .= " AND list_id = :list_id";
+            $params[':list_id'] = $filter;
+        } elseif ($filter === 'important') {
+            $sql .= " AND is_important = 1";
+        } elseif ($filter === 'my-day') {
+            $sql .= " AND due_date = CURDATE()";
+        } elseif ($filter === 'planned') {
+            $sql .= " AND due_date IS NOT NULL";
+        } else {
+            $sql .= " AND (list_id IS NULL OR list_id = 0)";
+        }
+
+        $stmt = $this->getDb()->prepare($sql);
+        $stmt->execute($params);
+        $result = $stmt->fetch();
+        return (int)$result['total'];
+    }
+
+    /**
+     * Get count of tasks for all special filters and lists for a user
+     * 
+     * @param int $userId User ID
+     * @param array $userLists Array of user's custom lists
+     * @return array Associative array with counts for each filter/list
+     */
+    public function getTaskCounts($userId, $userLists = [])
+    {
+        $counts = [
+            'inbox' => $this->countByFilter($userId, 'inbox'),
+            'my-day' => $this->countByFilter($userId, 'my-day'),
+            'important' => $this->countByFilter($userId, 'important'),
+            'planned' => $this->countByFilter($userId, 'planned'),
+            'lists' => []
+        ];
+
+        foreach ($userLists as $list) {
+            $counts['lists'][$list['id']] = $this->countByFilter($userId, $list['id']);
+        }
+
+        return $counts;
+    }
+
+    /**
+     * Get comprehensive task statistics for a user
+     * 
+     * @param int $userId User ID
+     * @return array Statistics including total, completed, incomplete, important counts
+     */
+    public function getStatistics($userId)
+    {
+        $sql = "SELECT 
+                    COUNT(*) as total,
+                    SUM(CASE WHEN completed = 1 THEN 1 ELSE 0 END) as completed,
+                    SUM(CASE WHEN completed = 0 THEN 1 ELSE 0 END) as incomplete,
+                    SUM(CASE WHEN is_important = 1 THEN 1 ELSE 0 END) as important,
+                    MIN(created_at) as first_task_date,
+                    MAX(created_at) as last_task_date
+                FROM tasks 
+                WHERE user_id = :user_id";
+
+        $stmt = $this->getDb()->prepare($sql);
+        $stmt->execute([':user_id' => $userId]);
+        $result = $stmt->fetch();
+
+        return [
+            'total' => (int)$result['total'],
+            'completed' => (int)($result['completed'] ?? 0),
+            'incomplete' => (int)($result['incomplete'] ?? 0),
+            'important' => (int)($result['important'] ?? 0),
+            'completion_rate' => $result['total'] > 0 ? round(((int)$result['completed'] / (int)$result['total']) * 100, 1) : 0,
+            'first_task_date' => $result['first_task_date'],
+            'last_task_date' => $result['last_task_date']
+        ];
     }
 }
