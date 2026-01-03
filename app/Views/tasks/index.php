@@ -45,7 +45,7 @@ ob_start();
 
             <div class="task-item <?= $isCompleted ? 'completed' : '' ?>">
 
-                <a href="/tasks/toggle?id=<?= $task['id'] ?>" class="task-checkbox-wrapper" title="Mark as completed">
+                <a href="/tasks/toggle?id=<?= $task['id'] ?>&filter=<?= htmlspecialchars($active_filter) ?>" class="task-checkbox-wrapper" title="Mark as completed">
                     <div class="custom-checkbox">
                         <?php if ($isCompleted): ?>
                             <i class="fa-solid fa-check"></i>
@@ -62,8 +62,13 @@ ob_start();
 
                             <?php if (!empty($task['due_date'])): ?>
                                 <span class="meta-separator">•</span>
-                                <span class="meta-date <?= (strtotime($task['due_date']) < time() && !$isCompleted) ? 'text-danger' : '' ?>">
-                                    <i class="fa-regular fa-calendar"></i> <?= date('M d', strtotime($task['due_date'])) ?>
+                                <?php
+                                $dueTimestamp = strtotime($task['due_date']);
+                                $todayTimestamp = strtotime(date('Y-m-d'));
+                                $isOverdue = ($dueTimestamp < $todayTimestamp && !$isCompleted);
+                                ?>
+                                <span class="meta-date <?= $isOverdue ? 'text-danger' : '' ?>">
+                                    <i class="fa-regular fa-calendar"></i> <?= date('M d', $dueTimestamp) ?>
                                 </span>
                             <?php endif; ?>
                         </div>
@@ -71,7 +76,7 @@ ob_start();
                 </a>
 
                 <div class="task-actions-group">
-                    <a href="/tasks/star?id=<?= $task['id'] ?>" class="action-btn star-btn <?= $isImportant ? 'active' : '' ?>">
+                    <a href="/tasks/star?id=<?= $task['id'] ?>&filter=<?= htmlspecialchars($active_filter) ?>" class="action-btn star-btn <?= $isImportant ? 'active' : '' ?>">
                         <i class="<?= $isImportant ? 'fa-solid' : 'fa-regular' ?> fa-star"></i>
                     </a>
 

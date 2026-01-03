@@ -96,11 +96,13 @@ class TaskController extends Controller
         $userId = Session::get('user_id');
         $userLists = $this->listModel->getListsByUserId($userId);
         $taskCounts = $this->taskModel->getTaskCounts($userId, $userLists);
+        $preSelectedListId = $_GET['list'] ?? null;
         
         $this->view('tasks/create', [
             'title' => 'Create New Task',
             'userLists' => $userLists,
-            'active_filter' => $_GET['list'] ?? null,
+            'preSelectedListId' => $preSelectedListId,
+            'active_filter' => $preSelectedListId,
             'taskCounts' => $taskCounts
         ]);
     }
@@ -116,6 +118,8 @@ class TaskController extends Controller
         $title = trim($_POST['title'] ?? '');
         $description = trim($_POST['description'] ?? '');
         $listId = !empty($_POST['list_id']) ? $_POST['list_id'] : null;
+        $dueDate = !empty($_POST['due_date']) ? $_POST['due_date'] : null;
+        $isImportant = !empty($_POST['is_important']) ? 1 : 0;
 
         // Validate input
         if (empty($title)) {
@@ -129,7 +133,9 @@ class TaskController extends Controller
             'user_id' => $userId,
             'list_id' => $listId,
             'title' => $title,
-            'description' => $description
+            'description' => $description,
+            'due_date' => $dueDate,
+            'is_important' => $isImportant
         ]);
 
         if ($result) {
@@ -196,6 +202,8 @@ class TaskController extends Controller
         $title = trim($_POST['title'] ?? '');
         $description = trim($_POST['description'] ?? '');
         $listId = !empty($_POST['list_id']) ? $_POST['list_id'] : null;
+        $dueDate = !empty($_POST['due_date']) ? $_POST['due_date'] : null;
+        $isImportant = !empty($_POST['is_important']) ? 1 : 0;
 
         // Validate
         if (empty($title)) {
@@ -208,7 +216,9 @@ class TaskController extends Controller
         $result = $this->taskModel->update($taskId, [
             'title' => $title,
             'description' => $description,
-            'list_id' => $listId
+            'list_id' => $listId,
+            'due_date' => $dueDate,
+            'is_important' => $isImportant
         ], $userId);
 
         if ($result) {
@@ -278,6 +288,50 @@ class TaskController extends Controller
             Session::flash('error', 'Failed to update task status');
         }
 
-        $this->redirect('/');
+        // Determine redirect URL to maintain current view
+        $filter = $_GET['filter'] ?? ($_GET['list'] ?? 'inbox');
+        if (is_numeric($filter)) {
+            $this->redirect('/?list=' . $filter);
+        } else {
+            $this->redirect('/?filter=' . $filter);
+        }
+    }
+
+    /**
+     * Mark a task as important or remove important status
+     * 
+     * Toggles the is_important flag for a task
+     * Redirects back to the current view (preserving filter/list)
+     */
+    public function star()
+    {
+        $this->requireAuth();
+        $userId = Session::get('user_id');
+
+        // Get task ID from URL
+        $taskId = $_GET['id'] ?? null;
+
+        if (!$taskId) {
+            Session::flash('error', 'Task not found');
+            $this->redirect('/');
+            return;
+        }
+
+        // Toggle important status
+        $result = $this->taskModel->toggleImportant($taskId, $userId);
+
+        if ($result) {
+            Session::flash('success', 'Task importance updated!');
+        } else {
+            Session::flash('error', 'Failed to update task');
+        }
+
+        // Determine redirect URL to maintain current view
+        $filter = $_GET['filter'] ?? ($_GET['list'] ?? 'inbox');
+        if (is_numeric($filter)) {
+            $this->redirect('/?list=' . $filter);
+        } else {
+            $this->redirect('/?filter=' . $filter);
+        }
     }
 }

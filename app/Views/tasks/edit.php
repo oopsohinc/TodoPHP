@@ -27,7 +27,7 @@ ob_start();
             <div class="form-row">
                 <div class="form-group half-width">
                     <label for="due_date">Due Date</label>
-                    <input type="date" id="due_date" name="due_date" class="form-control" value="<?= $task['due_date'] ?? '' ?>">
+                    <input type="date" id="due_date" name="due_date" class="form-control" value="<?= htmlspecialchars($task['due_date'] ?? '') ?>">
                 </div>
             </div>
 

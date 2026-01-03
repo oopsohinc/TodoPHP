@@ -44,7 +44,7 @@ ob_start();
                 <label for="list_id"><i class="fa-solid fa-layer-group"></i> Add to List</label>
                 <select name="list_id" id="list_id" class="form-control">
 
-                    <option value="" <?= empty($preSelectedListId) ? 'selected' : '' ?>>Tasks (Inbox)</option>
+                    <option value="" <?= (empty($preSelectedListId) || !is_numeric($preSelectedListId)) ? 'selected' : '' ?>>Tasks (Inbox)</option>
 
                     <?php if (!empty($userLists)): ?>
                         <?php foreach ($userLists as $list): ?>
