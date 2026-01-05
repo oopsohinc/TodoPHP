@@ -308,4 +308,29 @@ class Task extends Model
             'last_task_date' => $result['last_task_date']
         ];
     }
+
+    /**
+     * Search tasks by title or description
+     * 
+     * @param int $userId User's ID
+     * @param string $query Search query
+     * @return array Array of matching tasks
+     */
+    public function searchTasks($userId, $query)
+    {
+        $stmt = $this->getDb()->prepare("
+            SELECT * FROM tasks 
+            WHERE user_id = ? 
+            AND (title LIKE ? OR description LIKE ?)
+            ORDER BY created_at DESC
+        ");
+        
+        $searchTerm = '%' . $query . '%';
+        $stmt->bindParam(1, $userId, PDO::PARAM_INT);
+        $stmt->bindParam(2, $searchTerm, PDO::PARAM_STR);
+        $stmt->bindParam(3, $searchTerm, PDO::PARAM_STR);
+        $stmt->execute();
+        
+        return $stmt->fetchAll();
+    }
 }

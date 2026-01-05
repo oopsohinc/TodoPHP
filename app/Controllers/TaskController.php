@@ -290,7 +290,10 @@ class TaskController extends Controller
 
         // Determine redirect URL to maintain current view
         $filter = $_GET['filter'] ?? ($_GET['list'] ?? 'inbox');
-        if (is_numeric($filter)) {
+        if ($filter === 'search') {
+            $q = $_GET['q'] ?? '';
+            $this->redirect('/tasks/search?q=' . urlencode($q));
+        } elseif (is_numeric($filter)) {
             $this->redirect('/?list=' . $filter);
         } else {
             $this->redirect('/?filter=' . $filter);
@@ -328,10 +331,51 @@ class TaskController extends Controller
 
         // Determine redirect URL to maintain current view
         $filter = $_GET['filter'] ?? ($_GET['list'] ?? 'inbox');
-        if (is_numeric($filter)) {
+        if ($filter === 'search') {
+            $q = $_GET['q'] ?? '';
+            $this->redirect('/tasks/search?q=' . urlencode($q));
+        } elseif (is_numeric($filter)) {
             $this->redirect('/?list=' . $filter);
         } else {
             $this->redirect('/?filter=' . $filter);
         }
+    }
+
+    /**
+     * Search tasks
+     */
+    public function search()
+    {
+        // Require user to be logged in
+        $this->requireAuth();
+
+        // Get current user's ID from session
+        $userId = Session::get('user_id');
+
+        $query = $_GET['q'] ?? '';
+
+        if (empty($query)) {
+            $this->redirect('/');
+            return;
+        }
+
+        // Search tasks
+        $tasks = $this->taskModel->searchTasks($userId, $query);
+
+        // Get all lists for sidebar
+        $userLists = $this->listModel->getListsByUserId($userId);
+        // Get task counts
+        $taskCounts = $this->taskModel->getTaskCounts($userId, $userLists);
+
+        // Load view and pass data
+        $this->view('tasks/index', [
+            'title' => 'Search Results for "' . htmlspecialchars($query) . '"',
+            'tasks' => $tasks,
+            'userLists' => $userLists,
+            'active_filter' => 'search',
+            'currentList' => null,
+            'taskCounts' => $taskCounts,
+            'search_query' => $query
+        ]);
     }
 }
