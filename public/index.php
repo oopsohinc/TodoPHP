@@ -62,6 +62,7 @@ $router->post('/tasks/edit', TaskController::class, 'edit');
 $router->get('/tasks/delete', TaskController::class, 'delete');
 $router->get('/tasks/toggle', TaskController::class, 'toggle');  // Toggle completion status
 $router->get('/tasks/star', TaskController::class, 'star');    // Toggle important status
+$router->get('/tasks/search', TaskController::class, 'search');
 // List Routes
 $router->get('/lists/create',   ListController::class, 'create');
 $router->post('/lists/create',  ListController::class, 'create');

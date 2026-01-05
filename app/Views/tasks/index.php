@@ -45,7 +45,7 @@ ob_start();
 
             <div class="task-item <?= $isCompleted ? 'completed' : '' ?>">
 
-                <a href="/tasks/toggle?id=<?= $task['id'] ?>&filter=<?= htmlspecialchars($active_filter) ?>" class="task-checkbox-wrapper" title="Mark as completed">
+                <a href="/tasks/toggle?id=<?= $task['id'] ?>&filter=<?= htmlspecialchars($active_filter) ?><?= ($active_filter === 'search' && isset($search_query)) ? '&q=' . urlencode($search_query) : '' ?>" class="task-checkbox-wrapper" title="Mark as completed">
                     <div class="custom-checkbox">
                         <?php if ($isCompleted): ?>
                             <i class="fa-solid fa-check"></i>
@@ -76,7 +76,7 @@ ob_start();
                 </a>
 
                 <div class="task-actions-group">
-                    <a href="/tasks/star?id=<?= $task['id'] ?>&filter=<?= htmlspecialchars($active_filter) ?>" class="action-btn star-btn <?= $isImportant ? 'active' : '' ?>">
+                    <a href="/tasks/star?id=<?= $task['id'] ?>&filter=<?= htmlspecialchars($active_filter) ?><?= isset($search_query) ? '&q=' . urlencode($search_query) : '' ?>" class="action-btn star-btn <?= $isImportant ? 'active' : '' ?>">
                         <i class="<?= $isImportant ? 'fa-solid' : 'fa-regular' ?> fa-star"></i>
                     </a>
 

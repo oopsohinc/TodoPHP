@@ -19,10 +19,12 @@
 
         <?php if (\App\Core\Session::get('user_id')): ?>
             <div class="nav-user">
-                <div class="search-box">
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" placeholder="Search">
-                </div>
+                <form class="search-box" action="/tasks/search" method="GET">
+                    <button type="submit" class="search-btn">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </button>
+                    <input type="text" name="q" placeholder="Search" required>
+                </form>
 
                 <div class="user-info">
                     <a href="/profile" class="user-profile-link" title="View Profile">

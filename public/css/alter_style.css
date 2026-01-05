@@ -61,7 +61,7 @@ a {
     gap: 15px;
 }
 
-/* Search box giả */
+/* Search box */
 .search-box {
     background: rgba(255, 255, 255, 0.2);
     border-radius: 4px;
@@ -85,7 +85,12 @@ a {
     color: rgba(255, 255, 255, 0.7);
 }
 
-.search-box i {
+.search-btn {
+    background: none;
+    border: none;
+    color: white;
+    padding: 0;
+    cursor: pointer;
     font-size: 12px;
 }
 
