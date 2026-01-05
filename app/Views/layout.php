@@ -119,7 +119,19 @@
 
 
             <?= $content ?? '' ?>
+
+            <footer class="custom-footer">
+                <div class="footer-divider">---------------------------------------------------------</div>
+                <p>© 2026 Nhóm 13 – Khoa CNTT – Đại học Khoa Học Đại Học Huế</p>
+                <p>Developed by: Nguyễn A, Trần B, Lê C</p>
+                <p>
+                    Liên hệ: <a href="https://github.com/oopsohinc/TodoPHP" target="_blank">https://github.com/oopsohinc/TodoPHP</a>
+                </p>
+                <div class="footer-divider">---------------------------------------------------------</div>
+            </footer>
         </main>
+
+                   
     </div>
 
     <script src="../js/main.js"></script>

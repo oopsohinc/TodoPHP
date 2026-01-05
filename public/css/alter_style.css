@@ -128,8 +128,9 @@ a {
     display: flex;
     flex: 1;
     /* Chiếm toàn bộ không gian còn lại dưới navbar */
-    height: calc(100vh - 48px);
+    /*height: calc(100vh - 48px);*/
     overflow: hidden;
+    min-height: 0; /* QUAN TRỌNG: Để Firefox/Chrome hiểu flex scroll */
 }
 
 /* --- 4. SIDEBAR --- */
@@ -255,14 +256,17 @@ a {
     padding: 30px 40px;
     overflow-y: auto;
     /* Cuộn dọc nội dung chính */
-    background-image: url('https://images.unsplash.com/photo-1554034483-04fda0d3507b?q=80&w=2070&auto=format&fit=crop');
+    background-image: 
+        linear-gradient(rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.85)),
+        url('https://images.unsplash.com/photo-1554034483-04fda0d3507b?q=80&w=2070&auto=format&fit=crop');
     /* Hình nền mờ ảo đẹp */
     background-size: cover;
     background-position: center;
+    background-attachment: local;
     position: relative;
 }
 
-/* Lớp phủ mờ để text dễ đọc hơn trên nền ảnh */
+/* Lớp phủ mờ để text dễ đọc hơn trên nền ảnh
 .main-content::before {
     content: "";
     position: absolute;
@@ -271,12 +275,12 @@ a {
     right: 0;
     bottom: 0;
     background: rgba(255, 255, 255, 0.85);
-    /* Độ mờ nền */
+    Độ mờ nền 
     z-index: 0;
     pointer-events: none;
-    /* Cho phép click xuyên qua lớp phủ */
+    Cho phép click xuyên qua lớp phủ 
 }
-
+*/
 /* Nội dung thực sự phải nổi lên trên lớp phủ */
 .main-content>* {
     position: relative;
@@ -754,4 +758,113 @@ a {
         flex-direction: column;
         gap: 0;
     }
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    font-weight: 500;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-primary {
+    background: var(--primary-color);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: var(--primary-dark);
+}
+
+.btn-secondary {
+    background: #f3f2f1;
+    color: #333;
+}
+
+.btn-secondary:hover {
+    background: #e1dfdd;
+}
+
+/* Edit Image Preview */
+.current-image-preview {
+    background: #f8f9fa;
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px dashed #ccc;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.current-image-preview img {
+    max-height: 150px;
+    max-width: 100%;
+    border-radius: 4px;
+    object-fit: contain;
+}
+
+/* Checkbox wrapper */
+.checkbox-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.checkbox-wrapper input {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.checkbox-wrapper label {
+    margin: 0;
+    cursor: pointer;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+    .form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+}
+/* --- FOOTER STYLES --- */
+.custom-footer {
+    background-color: #000000; /* Nền đen */
+    color: #ffffff;            /* Chữ trắng */
+    padding: 20px;
+    text-align: center;
+    font-size: 14px;
+    line-height: 1.6;
+    
+    /* Kỹ thuật Margin Âm: Để footer tràn viền, bù trừ cho padding của .main-content */
+    margin-top: 40px;          /* Cách nội dung bên trên một khoảng */
+    margin-left: -40px;        /* Kéo sang trái đè lên padding của main */
+    margin-right: -40px;       /* Kéo sang phải đè lên padding của main */
+    margin-bottom: -30px;      /* Kéo xuống dưới đè lên padding của main */
+}
+
+.custom-footer a {
+    color: #4da6ff; /* Màu link nổi bật trên nền đen */
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.custom-footer a:hover {
+    text-decoration: underline;
+}
+
+.footer-divider {
+    color: #555; /* Màu gạch ngang tối hơn chút */
+    margin: 10px 0;
+    overflow: hidden;
+    white-space: nowrap; /* Giữ dòng gạch ngang trên 1 dòng */
+    opacity: 0.7;
 }
