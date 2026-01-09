@@ -9,6 +9,272 @@ Tai lieu nay tom tat cach luu thong tin va xu ly request theo kieu MVC trong Tod
 - Controller xu ly quyen (Session), goi Model doc/ghi DB, chuan bi data va render View qua `Controller::view()` tu [app/Core/Controller.php](app/Core/Controller.php).
 - View dung output buffering dua noi dung vao [app/Views/layout.php](app/Views/layout.php), layout chen flash message, sidebar va assets -> tra HTML ve trinh duyet.
 
+## Tom tat Project & Core Features
+- Xac thuc nguoi dung: login/register, luu session, bao ve route.
+- Quan ly task: xem theo filter (inbox, my-day, important, planned, theo list), tao/sua/xoa, toggle hoan thanh/important.
+- Quan ly list: tao/sua/xoa list rieng cua tung user; sidebar hien dem theo tung list/filter.
+- Tim kiem: form tren navbar GET den `/tasks/search?q=...`, tra ket qua day du trong view `tasks/index`.
+- Ho so & thong ke: trang profile hien thong ke tong, completed/incomplete, important, ngay tao/cap nhat.
+- Kien truc MVC don gian: `Router` -> `Controller` -> `Model` -> `View`, su dung PDO MySQL, flash message mot lan, layout chung.
+
+### Du lieu di chuyen User ↔ Database
+1. Trinh duyet (UI) tao request:
+   - GET hien form (vi du xem tao task tai `/tasks/create`).
+   - POST submit form (vi du tao task tu form).
+2. [public/index.php](public/index.php) nhan request, `Router` dinh tuyen den controller method phu hop.
+3. Controller trong [app/Controllers](app/Controllers) kiem tra session/quyen, doc input, goi Model tu [app/Models](app/Models) de tuong tac DB.
+4. Model su dung PDO (khai bao trong [app/Core/Model.php](app/Core/Model.php)) thuc hien query an toan (prepared statements), tra ve du lieu dang associative.
+5. Controller chuan bi `$data`, render View tu [app/Core/Controller.php](app/Core/Controller.php) -> [app/Views](app/Views) -> [app/Views/layout.php](app/Views/layout.php) -> HTML ve trinh duyet.
+
+So do don gian: Trinh duyet → Router → Controller → Model (PDO) → DB → Controller → View → Trinh duyet.
+
+### Doan code tuong tac tieu bieu
+- Dinh tuyen route trong [public/index.php](public/index.php):
+
+```php
+// Khoi tao Router va khai bao mot so route mau
+$router->get('/', 'TaskController@index');
+$router->get('/tasks/create', 'TaskController@create');
+$router->post('/tasks/create', 'TaskController@store');
+$router->get('/tasks/search', 'TaskController@search');
+```
+
+- Controller goi Model va render View (vi du trong `TaskController`):
+
+```php
+public function store() {
+  $this->requireAuth();
+  $title = trim($_POST['title'] ?? '');
+  $listId = $_POST['list_id'] ?? null;
+  $dueDate = $_POST['due_date'] ?? null;
+  $important = !empty($_POST['is_important']);
+
+  if ($title === '') {
+    \App\Core\Session::flash('error', 'Tieu de khong duoc de trong');
+    return $this->redirect('/tasks/create');
+  }
+
+  $ok = \App\Models\Task::create($this->user['id'], $title, $listId, $dueDate, $important);
+  \App\Core\Session::flash($ok ? 'success' : 'error', $ok ? 'Tao task thanh cong' : 'Tao task that bai');
+  return $this->redirect('/tasks');
+}
+```
+
+- Model su dung PDO (trong [app/Models/Task.php](app/Models/Task.php)) de ghi/lay du lieu:
+
+```php
+public static function create($userId, $title, $listId, $dueDate, $isImportant) {
+  $db = static::getDB(); // from App\Core\Model
+  $sql = 'INSERT INTO tasks (user_id, title, list_id, due_date, is_important) VALUES (?, ?, ?, ?, ?)';
+  $stmt = $db->prepare($sql);
+  return $stmt->execute([$userId, $title, $listId, $dueDate, $isImportant ? 1 : 0]);
+}
+
+public static function searchTasks($userId, $q) {
+  $db = static::getDB();
+  $like = "%$q%";
+  $stmt = $db->prepare('SELECT * FROM tasks WHERE user_id = ? AND (title LIKE ? OR description LIKE ?) ORDER BY updated_at DESC');
+  $stmt->execute([$userId, $like, $like]);
+  return $stmt->fetchAll();
+}
+```
+
+- Ket noi DB (trich tu [app/Core/Model.php](app/Core/Model.php)):
+
+```php
+protected static function getDB() {
+  static $db;
+  if (!$db) {
+    $config = require __DIR__ . '/../../Config/database.php';
+    $dsn = "mysql:host={$config['host']};dbname={$config['dbname']};charset=utf8mb4";
+    $db = new \PDO($dsn, $config['username'], $config['password'], [
+      \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+      \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+      \PDO::ATTR_EMULATE_PREPARES => false,
+    ]);
+  }
+  return $db;
+}
+```
+
+- Render View qua layout (trich luot tu [app/Core/Controller.php](app/Core/Controller.php) va [app/Views/layout.php](app/Views/layout.php)):
+
+```php
+// Controller::view('tasks/index', $data)
+ob_start();
+require __DIR__ . '/../Views/' . $view . '.php';
+$content = ob_get_clean();
+require __DIR__ . '/../Views/layout.php';
+```
+
+- Ho so & thong ke (Profile/Statistics):
+  - Route GET `/profile` vao `UserController::profile()`, yeu cau dang nhap.
+  - Controller goi `User::findById()` de lay thong tin ca nhan, `TodoList::getListsByUserId()` de lay danh sach custom list cua user, `Task::getTaskCounts()` de dem task theo filter/list, `Task::getStatistics()` de tinh tong/hoan thanh/chua hoan thanh/quan trong/ty le hoan thanh.
+  - View [app/Views/user/profile.php](app/Views/user/profile.php) hien thi:
+    - Profile header: ten, email, ngay tham gia.
+    - Stat cards: tong task, hoan thanh, chua hoan thanh, quan trong, ty le hoan thanh (%), tong so custom list.
+    - Progress bar: hien thi thanh progress hoan thanh (%) va so task hoan thanh / tong.
+    - Lists section: danh sach custom list voi so task cua moi list, nut "View Tasks", "Edit", "Delete" cho tung list.
+  - Code tich hop du lieu:
+
+```php
+// UserController::profile() - lay du lieu cho profile
+$user = $this->userModel->findById($userId);
+$userLists = $this->listModel->getListsByUserId($userId);
+$taskCounts = $this->taskModel->getTaskCounts($userId, $userLists);
+$stats = $this->taskModel->getStatistics($userId);
+// Sau do pass vao view qua $data: ['user' => $user, 'userLists' => $userLists, 'taskCounts' => $taskCounts, 'stats' => $stats]
+```
+
+```php
+// Task::getStatistics() trong app/Models/Task.php - tinh toan chi so
+public static function getStatistics($userId) {
+  $db = static::getDB();
+  $stmt = $db->prepare('SELECT COUNT(*) as total, SUM(CASE WHEN is_completed = 1 THEN 1 ELSE 0 END) as completed FROM tasks WHERE user_id = ?');
+  $stmt->execute([$userId]);
+  $result = $stmt->fetch();
+  $total = (int)$result['total'];
+  $completed = (int)$result['completed'] ?? 0;
+  $incomplete = $total - $completed;
+  $completionRate = $total > 0 ? round(($completed / $total) * 100) : 0;
+  // Tra ve mang chi so
+  return [
+    'total' => $total,
+    'completed' => $completed,
+    'incomplete' => $incomplete,
+    'completion_rate' => $completionRate,
+    'important' => /* ... so task quan trong ... */,
+  ];
+}
+```
+
+```php
+// profile.php - render stat cards va lists
+<?php foreach ($userLists as $list): ?>
+  <?php $listCount = $taskCounts['lists'][$list['id']] ?? 0; ?>
+  <div class="list-card">
+    <h3><?= htmlspecialchars($list['name']) ?></h3>
+    <span><?= $listCount ?> tasks</span>
+    <a href="/tasks?list=<?= $list['id'] ?>">View Tasks</a>
+  </div>
+<?php endforeach; ?>
+```
+
+## Flow chi tiet: Tasks
+- Route chinh (trong [public/index.php](public/index.php)):
+  - GET `/` va `/tasks` -> `TaskController@index`
+  - GET `/tasks/create` -> `TaskController@create`; POST `/tasks/create` -> `TaskController@store`
+  - GET `/tasks/edit` -> `TaskController@edit`; POST `/tasks/edit` -> `TaskController@update`
+  - GET `/tasks/delete` -> `TaskController@delete`
+  - POST `/tasks/toggle` -> `TaskController@toggleComplete`; POST `/tasks/star` -> `TaskController@toggleImportant`
+  - GET `/tasks/search` -> `TaskController@search`
+
+- Controller ([app/Controllers/TaskController.php](app/Controllers/TaskController.php)):
+  - `index()`: requireAuth, doc `filter|list` tu query, goi `Task::getTasksByUserId()` lay ds theo filter, lay lists + `Task::getTaskCounts()`, render `tasks/index`.
+  - `create()` / `store()`: tai lists, validate title, goi `Task::create()` (user_id, list_id, due_date, important), flash & redirect.
+  - `edit()` / `update()`: check quyen qua `Task::findById()` (user_id), update title/description/list/due_date/important.
+  - `delete()`: goi `Task::delete($taskId, $userId)`, flash & redirect theo context.
+  - `toggleComplete()` / `toggleImportant()`: POST, goi model toggle, redirect giu filter/list.
+  - `search()`: GET `q`, goi `Task::searchTasks($userId, $q)`, reuse view `tasks/index` hien ket qua full page.
+
+- Model ([app/Models/Task.php](app/Models/Task.php)):
+  - `getTasksByUserId($userId, $filter, $listId)`: tra ds task theo filter inbox/my-day/important/planned hoac listId.
+  - `create()`, `update()`, `delete()`: prepared statements kem `user_id` trong WHERE de tranh truy cap cheo.
+  - `toggleComplete()`, `toggleImportant()`: UPDATE voi dieu kien user_id.
+  - `getTaskCounts($userId, $lists)`: dem so task cho sidebar (inbox, special filters, tung list).
+  - `searchTasks($userId, $q)`: LIKE `%q%` tren title/description.
+
+- View ([app/Views/tasks/index.php](app/Views/tasks/index.php)):
+  - Render danh sach task theo filter/list/search, nut toggle complete/important, edit, delete.
+  - Sidebar su dung `$taskCounts` de hien badge; form search o navbar GET `/tasks/search`.
+
+Doan code mau:
+
+```php
+// TaskController@index - rut gon
+$tasks = Task::getTasksByUserId($this->user['id'], $_GET['filter'] ?? null, $_GET['list'] ?? null);
+$lists = TodoList::getListsByUserId($this->user['id']);
+$taskCounts = Task::getTaskCounts($this->user['id'], $lists);
+return $this->view('tasks/index', compact('tasks', 'lists', 'taskCounts'));
+```
+
+```php
+// Task::toggleComplete
+public static function toggleComplete($taskId, $userId) {
+  $db = static::getDB();
+  $stmt = $db->prepare('UPDATE tasks SET is_completed = NOT is_completed WHERE id = ? AND user_id = ?');
+  return $stmt->execute([$taskId, $userId]);
+}
+```
+
+## Flow chi tiet: Lists
+- Route (public/index.php):
+  - GET `/lists/create` -> `ListController@create`; POST `/lists/create` -> `ListController@store`
+  - GET `/lists/edit` -> `ListController@edit`; POST `/lists/edit` -> `ListController@update`
+  - GET `/lists/delete` -> `ListController@delete`
+
+- Controller ([app/Controllers/ListController.php](app/Controllers/ListController.php)):
+  - `create()/store()`: requireAuth, validate name, goi `TodoList::create($userId, $name)`, flash & redirect home.
+  - `edit()/update()`: check so huu qua `TodoList::findById($id, $userId)`, cap nhat ten list.
+  - `delete()`: xac minh so huu, goi `TodoList::delete($id, $userId)`, flash & redirect.
+  - Luon nap lists + `Task::getTaskCounts()` de sidebar dong bo.
+
+- Model ([app/Models/TodoList.php](app/Models/TodoList.php)):
+  - CRUD list kem dieu kien `user_id` trong WHERE.
+  - `getListsByUserId($userId)`: tra ve ds list cua user de render sidebar/profile.
+
+- View:
+  - [app/Views/lists/create.php](app/Views/lists/create.php) va [app/Views/lists/edit.php](app/Views/lists/edit.php) hien form name, submit POST.
+  - Sidebar trong layout su dung lists + counts; profile page liet ke lists kem actions.
+
+Doan code mau:
+
+```php
+// ListController@store
+$name = trim($_POST['name'] ?? '');
+if ($name === '') {
+  Session::flash('error', 'List name khong duoc de trong');
+  return $this->redirect('/lists/create');
+}
+$ok = TodoList::create($this->user['id'], $name);
+Session::flash($ok ? 'success' : 'error', $ok ? 'Tao list thanh cong' : 'Tao list that bai');
+return $this->redirect('/');
+```
+
+## Flow chi tiet: Auth (Login/Register/Logout)
+- Route (public/index.php):
+  - GET `/login` -> `AuthController@showLogin`; POST `/login` -> `AuthController@login`
+  - GET `/register` -> `AuthController@showRegister`; POST `/register` -> `AuthController@register`
+  - GET `/logout` -> `AuthController@logout`
+
+- Controller ([app/Controllers/AuthController.php](app/Controllers/AuthController.php)):
+  - `showLogin()` / `showRegister()`: requireGuest, render form.
+  - `login()`: requireGuest, doc email/password, `User::verify($email, $password)`, set session `user_id`, flash, redirect home.
+  - `register()`: validate name/email/password, check email ton tai, `User::create(...)` (hash bcrypt), set session, flash, redirect home.
+  - `logout()`: destroy session, flash, redirect login.
+
+- Model ([app/Models/User.php](app/Models/User.php)):
+  - `findByEmail()`, `findById()`, `create()` (password_hash), `verify()` (password_verify + tra user record).
+
+- View:
+  - [app/Views/auth/login.php](app/Views/auth/login.php) va [app/Views/auth/register.php](app/Views/auth/register.php) form POST, hien flash error/success tu Session.
+
+Doan code mau:
+
+```php
+// AuthController@login - rut gon
+$email = trim($_POST['email'] ?? '');
+$password = $_POST['password'] ?? '';
+$user = User::verify($email, $password);
+if ($user) {
+  Session::set('user_id', $user['id']);
+  Session::flash('success', 'Dang nhap thanh cong');
+  return $this->redirect('/');
+}
+Session::flash('error', 'Email hoac mat khau khong dung');
+return $this->redirect('/login');
+```
+
 ## Ban do file chinh
 - Entry point & route map: [public/index.php](public/index.php) — khai bao route auth, tasks, lists, profile, search va goi `$router->dispatch()`.
 - Core layer:
@@ -63,6 +329,8 @@ Tai lieu nay tom tat cach luu thong tin va xu ly request theo kieu MVC trong Tod
 - Flash message mot lan trong [app/Core/Session.php](app/Core/Session.php) giup thong bao sau redirect.
 - Filter task linh dong trong `Task::getTasksByUserId()` xu ly ca inbox (NULL/0), special list (important/my-day/planned), va custom list id.
 - Dem so luong task cho sidebar bang `Task::getTaskCounts()` de hien badge theo tung filter/list.
+
+
 
 ## Ghi chu van hanh
 - Khi them route moi: khai bao tai [public/index.php](public/index.php) va tao method tuong ung trong controller.
